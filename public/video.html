@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Video Visit</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    #v2{
+      
+      color: #1565c0;
+      font-size:48px;
+
+    }
+  </style>
+</head>
+<body class="video-page">
+   <a href="home.html" class="top-home-btn">🏠 Home</a>
+  <h1 id="v2"><b>ICU Virtual Visit</b></h1>
+  <h2 id="timer">Time Left: 300s</h2>
+
+  <div class="video-wrapper">
+    <video id="localVideo" autoplay muted playsinline></video>
+    <video id="remoteVideo" autoplay playsinline></video>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const roomId = window.location.search.substring(1);
+
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const timerEl = document.getElementById('timer');
+
+    let peerConnection;
+    let localStream;
+    let startTime = new Date();
+
+    const config = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' }
+      ]
+    };
+
+    async function startVideo() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true
+        });
+
+        //local camera attach
+        localVideo.srcObject = localStream;
+
+        peerConnection = new RTCPeerConnection(config);
+
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
+        });
+
+        //remote stream attach
+        peerConnection.ontrack = event => {
+          remoteVideo.srcObject = event.streams[0];
+        };
+
+        peerConnection.onicecandidate = event => {
+          if (event.candidate) {
+            socket.emit('ice-candidate', {
+              roomId,
+              candidate: event.candidate
+            });
+          }
+        };
+
+        socket.emit('join-room', roomId);
+
+      } catch (error) {
+        alert('Camera access denied or not found');
+        console.error(error);
+      }
+    }
+
+    socket.on('user-joined', async () => {
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+
+      socket.emit('offer', { roomId, offer });
+    });
+
+    socket.on('offer', async offer => {
+      await peerConnection.setRemoteDescription(offer);
+
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+
+      socket.emit('answer', { roomId, answer });
+    });
+
+    socket.on('answer', async answer => {
+      await peerConnection.setRemoteDescription(answer);
+    });
+
+    socket.on('ice-candidate', async candidate => {
+      try {
+        await peerConnection.addIceCandidate(candidate);
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // TIMER
+    let timeLeft = 300;
+    const timer = setInterval(async () => {
+      timeLeft--;
+      timerEl.innerText = `Time Left: ${timeLeft}s`;
+
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+
+        const endTime = new Date();
+
+        await fetch('/api/session/log', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            roomId,
+            startTime,
+            endTime,
+            duration: 300
+          })
+        });
+
+        window.location.href = `feedback.html?room=${roomId}`;
+      }
+    }, 1000);
+
+    startVideo();
+  </script>
+</body>
+</html>

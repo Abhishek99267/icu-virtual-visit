@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Visit Feedback</title>
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    body{
+      
+    flex: 1;
+    padding: 40px;
+    background:url("icu6.jpg") no-repeat center center/cover;
+
+    }
+
+    .feedback-page {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .feedback-box {
+      width: 100%;
+      max-width: 1000px;
+      height:700px;
+      background:transparent;
+      padding: 32px;
+      border-radius: 18px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+    }
+
+    .feedback-box h1 {
+      text-align: center;
+      color:gold;
+      text-shadow: black;
+      margin-bottom: 10px;
+      font-size:45px;
+    }
+
+    .feedback-box p {
+      text-align: center;
+      color:white;
+      text-shadow: black;
+      margin-bottom: 20px;
+      font-size:35px;
+    }
+
+    .rating-stars {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      font-size: 36px;
+      cursor: pointer;
+      margin-bottom: 25px;
+    }
+
+    .rating-stars span {
+      transition: 0.2s;
+      opacity: 0.4;
+    }
+
+    .rating-stars span.active {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 50px;
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid white;
+      resize: vertical;
+      font-size: 15px;
+      margin-bottom: 18px;
+      color:white;
+      background-color:black;
+    }
+
+    .submit-btn {
+      display:flex;
+      width: 500px;
+      padding: 14px;
+      border: none;
+      background: black;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      justify-content:center;
+      align-items:center;
+      margin:20px auto 0;
+    }
+
+    .submit-btn:hover {
+      background: #0d47a1;
+    }
+  </style>
+</head>
+<body class="feedback-page">
+   <a href="home.html" class="top-home-btn">🏠 Home</a>
+  <br>
+  <br>
+
+  <div class="feedback-box"><br><br>
+    <h1>Visit Feedback</h1>
+    <div class="rating-stars" id="ratingStars">
+      <span data-value="1">⭐</span>
+      <span data-value="2">⭐</span>
+      <span data-value="3">⭐</span>
+      <span data-value="4">⭐</span>
+      <span data-value="5">⭐</span>
+    </div>
+
+      <textarea id="feedbackComment" placeholder="Write your feedback here..."></textarea>
+      <button class="submit-btn" onclick="submitFeedback()">Submit Feedback</button>
+  </div>
+
+  <script>
+    let selectedRating = 0;
+    const stars = document.querySelectorAll('#ratingStars span');
+
+    // Star selection
+    stars.forEach(star => {
+      star.addEventListener('click', () => {
+        selectedRating = Number(star.dataset.value);
+
+        stars.forEach(s => s.classList.remove('active'));
+
+        for (let i = 0; i < selectedRating; i++) {
+          stars[i].classList.add('active');
+        }
+      });
+    });
+
+    async function submitFeedback() {
+      const roomId = new URLSearchParams(window.location.search).get('room') || 'DEMO_ROOM_101';
+      const comment = document.getElementById('feedbackComment').value;
+
+      if (!selectedRating) {
+        return alert('Please select rating');
+      }
+
+      const res = await fetch('/api/session/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          roomId,
+          rating: selectedRating,
+          comment
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert('✅ Feedback submitted successfully');
+        window.location.href = 'history.html';
+      } else {
+        alert(data.message || 'Feedback submit failed');
+      }
+    }
+  </script>
+</body>
+</html>
