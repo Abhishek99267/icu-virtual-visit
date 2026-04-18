@@ -48,7 +48,7 @@
    <br>
 
    <input type="text" id="roomInput" placeholder="Room ID" class="top-room-input">
-<button onclick="launchVideo()" class="top-go-btn">Go</button>
+<button onclick="goToRoom()" class="top-go-btn">Go</button>
   
   <h1 id="v2"><b>ICU Virtual Visit</b></h1>
   <h2 id="timer">Time Left: 300s</h2>
@@ -68,9 +68,9 @@
     // const roomId = window.location.search.substring(1);
 const roomId = new URLSearchParams(window.location.search).get("room");
 
-// if (roomId) {
-//   socket.emit("join-room", roomId);
-// }
+if (roomId) {
+  socket.emit("join-room", roomId);
+}
     const localVideo = document.getElementById('localVideo');
     const remoteVideo = document.getElementById('remoteVideo');
     const timerEl = document.getElementById('timer');
@@ -234,7 +234,10 @@ function goToRoom() {
   // redirect to same page with room param
   window.location.href = `video.html?room=${room}`;
 }
-    startVideo();
+    
+    if (roomId) {
+  startVideo();
+}
   </script>
 </body>
 </html>
