@@ -126,7 +126,7 @@ const roomId = new URLSearchParams(window.location.search).get("room");
     });
 
    
-    let timeLeft = 300;
+    let timeLeft = Number(new URLSearchParams(window.location.search).get("time")) || 300;
 let timerStarted = false;
 
 function startCallTimer() {
