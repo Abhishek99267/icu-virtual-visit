@@ -10,10 +10,46 @@
       font-size:48px;
 
     }
+    .top-room-input {
+  position: absolute;
+  top: 70px;
+  left: 10px;
+  width: 250px;
+  padding: 5px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+.top-go-btn {
+  position: absolute;
+  top: 70px;
+  left: 270px;
+  padding: 5px 10px;
+  font-size: 12px;
+  border: none;
+  background: #1565c0;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  width: auto;   /* IMPORTANT */
+}
+
+.top-go-btn:hover {
+  background: #0d47a1;
+}
+   
+
   </style>
 </head>
 <body class="video-page">
    <a href="home.html" class="top-home-btn">🏠 Home</a>
+   
+   <br>
+   <br>
+
+   <input type="text" id="roomInput" placeholder="Room ID" class="top-room-input">
+<button onclick="launchVideo()" class="top-go-btn">Go</button>
+  
   <h1 id="v2"><b>ICU Virtual Visit</b></h1>
   <h2 id="timer">Time Left: 300s</h2>
 
@@ -157,7 +193,15 @@ function startCallTimer() {
     }
   }, 1000);
 }
+function launchVideo() {
+  const room = document.getElementById("roomInput").value;
 
+  if (!room) {
+    return alert("Enter Room ID");
+  }
+
+  window.location.href = `video.html?room=${room}`;
+}
     startVideo();
   </script>
 </body>
