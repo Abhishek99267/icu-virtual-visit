@@ -244,6 +244,24 @@ async function loadHistory() {
   `).join('');
 }
 
+router.get('/room/:roomId', async (req, res) => {
+  try {
+    const roomId = req.params.roomId;
+
+    const request = await Request.findOne({ roomId });
+
+    if (!request) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    res.json({
+      timeLimit: request.timeLimit || 300
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching room data" });
+  }
+});
 
 
 // FEEDBACK

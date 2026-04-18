@@ -90,6 +90,7 @@ const roomId = new URLSearchParams(window.location.search).get("room");
   alert("Room ID missing");
   return;
 }
+await loadRoomTime();
       try {
         localStream = await navigator.mediaDevices.getUserMedia({
           video: true,
@@ -162,7 +163,21 @@ const roomId = new URLSearchParams(window.location.search).get("room");
     });
 
    
-   let timeLeft = Number(localStorage.getItem("callTime")) || 300;
+  let timeLeft = 300;
+
+async function loadRoomTime() {
+  try {
+    const res = await fetch(`https://icu-virtual-visit.onrender.com/api/session/room/${roomId}`);
+    const data = await res.json();
+
+    timeLeft = data.timeLimit || 300;
+
+    console.log("Time from backend:", timeLeft);
+
+  } catch (err) {
+    console.error("Error fetching time:", err);
+  }
+}
 let timerStarted = false;
 
 function startCallTimer() {
