@@ -224,6 +224,16 @@ window.location.href = `feedback.html?room=${roomId}`;
 
 // window.location.href = `video.html?room=${room}&time=${time}`;
 // }
+function goToRoom() {
+  const room = document.getElementById("roomInput").value;
+
+  if (!room) {
+    return alert("Enter Room ID");
+  }
+
+  // redirect to same page with room param
+  window.location.href = `video.html?room=${room}`;
+}
     startVideo();
   </script>
 </body>
