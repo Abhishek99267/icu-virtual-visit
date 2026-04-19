@@ -85,52 +85,135 @@ const roomId = new URLSearchParams(window.location.search).get("room");
       ]
     };
 let socket;
-    async function startVideo() {
-      if (!roomId) {
-  alert("Room ID missing");
-  return;
-}
-// await loadRoomTime();
+//     async function startVideo() {
+//       if (!roomId) {
+//   alert("Room ID missing");
+//   return;
+// }
+// // await loadRoomTime();
+//   socket = io("https://icu-virtual-visit.onrender.com", {
+//   transports: ["websocket", "polling"]
+// });
+//       try {
+//         localStream = await navigator.mediaDevices.getUserMedia({
+//           video: true,
+//           audio: true
+//         });
+
+//         //local camera attach
+//         localVideo.srcObject = localStream;
+
+//         peerConnection = new RTCPeerConnection(config);
+
+//         localStream.getTracks().forEach(track => {
+//           peerConnection.addTrack(track, localStream);
+//         });
+
+//         //remote stream attach
+//         peerConnection.ontrack = event => {
+//           remoteVideo.srcObject = event.streams[0];
+//           startCallTimer();
+//         };
+
+//         peerConnection.onicecandidate = event => {
+//           if (event.candidate) {
+//             socket.emit('ice-candidate', {
+//               roomId,
+//               candidate: event.candidate
+//             });
+//           }
+//         };
+
+//         socket.emit('join-room', roomId);
+
+//       } catch (error) {
+//         alert('Camera access denied or not found');
+//         console.error(error);
+//       }
+//     }
+
+
+
+async function startVideo() {
+  if (!roomId) {
+    alert("Room ID missing");
+    return;
+  }
+
   socket = io("https://icu-virtual-visit.onrender.com", {
-  transports: ["websocket", "polling"]
-});
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true
+    transports: ["websocket", "polling"]
+  });
+
+  // ✅ EVENTS YAHAN ADD KARO
+  socket.on('user-joined', async () => {
+    if (!peerConnection) return;
+
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+
+    socket.emit('offer', { roomId, offer });
+  });
+
+  socket.on('offer', async offer => {
+    if (!peerConnection) return;
+
+    await peerConnection.setRemoteDescription(offer);
+
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+
+    socket.emit('answer', { roomId, answer });
+  });
+
+  socket.on('answer', async answer => {
+    if (!peerConnection) return;
+
+    await peerConnection.setRemoteDescription(answer);
+  });
+
+  socket.on('ice-candidate', async candidate => {
+    if (!peerConnection) return;
+
+    await peerConnection.addIceCandidate(candidate);
+  });
+
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true
+    });
+
+    localVideo.srcObject = localStream;
+
+    peerConnection = new RTCPeerConnection(config);
+
+    localStream.getTracks().forEach(track => {
+      peerConnection.addTrack(track, localStream);
+    });
+
+    peerConnection.ontrack = event => {
+      remoteVideo.srcObject = event.streams[0];
+
+      // ✅ TIMER YAHAN START
+      startCallTimer();
+    };
+
+    peerConnection.onicecandidate = event => {
+      if (event.candidate) {
+        socket.emit('ice-candidate', {
+          roomId,
+          candidate: event.candidate
         });
-
-        //local camera attach
-        localVideo.srcObject = localStream;
-
-        peerConnection = new RTCPeerConnection(config);
-
-        localStream.getTracks().forEach(track => {
-          peerConnection.addTrack(track, localStream);
-        });
-
-        //remote stream attach
-        peerConnection.ontrack = event => {
-          remoteVideo.srcObject = event.streams[0];
-          startCallTimer();
-        };
-
-        peerConnection.onicecandidate = event => {
-          if (event.candidate) {
-            socket.emit('ice-candidate', {
-              roomId,
-              candidate: event.candidate
-            });
-          }
-        };
-
-        socket.emit('join-room', roomId);
-
-      } catch (error) {
-        alert('Camera access denied or not found');
-        console.error(error);
       }
-    }
+    };
+
+    socket.emit('join-room', roomId);
+
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 
     // socket.on('user-joined', async () => {
     //   if(!peerConnection)return;
@@ -139,57 +222,57 @@ let socket;
 
     //   socket.emit('offer', { roomId, offer });
     // });
-    socket.on('user-joined', async () => {
+//     socket.on('user-joined', async () => {
       
-  if (!peerConnection) return;
+//   if (!peerConnection) return;
 
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
+//   const offer = await peerConnection.createOffer();
+//   await peerConnection.setLocalDescription(offer);
 
-  socket.emit('offer', { roomId, offer });
-});
+//   socket.emit('offer', { roomId, offer });
+// });
 
-    socket.on('offer', async offer => {
-      if (!peerConnection)return;
-      if(peerConnection.signalingState !=="stable")return;
-      await peerConnection.setRemoteDescription(offer);
+    // socket.on('offer', async offer => {
+    //   if (!peerConnection)return;
+    //   if(peerConnection.signalingState !=="stable")return;
+    //   await peerConnection.setRemoteDescription(offer);
 
-      const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
+    //   const answer = await peerConnection.createAnswer();
+    //   await peerConnection.setLocalDescription(answer);
 
-      socket.emit('answer', { roomId, answer });
-    });
+    //   socket.emit('answer', { roomId, answer });
+    // });
 
     // socket.on('answer', async answer => {
     //   if(!peerConnection) return;
     //   await peerConnection.setRemoteDescription(answer);
     // });
-    socket.on('answer', async answer => {
-  if (!peerConnection) return;
+//     socket.on('answer', async answer => {
+//   if (!peerConnection) return;
 
-  try {
-    await peerConnection.setRemoteDescription(answer);
-  } catch (e) {
-    console.log("Answer error:", e);
-  }
-});
+//   try {
+//     await peerConnection.setRemoteDescription(answer);
+//   } catch (e) {
+//     console.log("Answer error:", e);
+//   }
+// });
 
-    socket.on('ice-candidate', async candidate => {
-      if(!peerConnection)return ;
-      try {
-        await peerConnection.addIceCandidate(candidate);
-      } catch (err) {
-        console.error(err);
-      }
-    });
-    setTimeout(async () => {
-  if (peerConnection && socket) {
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
+    // socket.on('ice-candidate', async candidate => {
+    //   if(!peerConnection)return ;
+    //   try {
+    //     await peerConnection.addIceCandidate(candidate);
+    //   } catch (err) {
+    //     console.error(err);
+    //   }
+    // });
+//     setTimeout(async () => {
+//   if (peerConnection && socket) {
+//     const offer = await peerConnection.createOffer();
+//     await peerConnection.setLocalDescription(offer);
 
-    socket.emit('offer', { roomId, offer });
-  }
-}, 2000);
+//     socket.emit('offer', { roomId, offer });
+//   }
+// }, 2000);
 
    
   // let timeLeft = 300;
